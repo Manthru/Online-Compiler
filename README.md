@@ -1,2 +1,0 @@
-# CP
-Start with me!
