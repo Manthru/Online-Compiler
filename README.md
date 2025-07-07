@@ -61,6 +61,7 @@ An online compiler platform that supports multiple programming languages, elimin
   - Build Docker images for each language container (refer to your Dockerfile setup).
 
 # 🙌 Acknowledgements
-Inspired by online platforms like Replit and JDoodle
+Inspired by online platforms like leetcode
+
 
 
