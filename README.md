@@ -11,6 +11,7 @@ An online compiler platform that supports multiple programming languages, elimin
 - 🧠 Syntax highlighting and structured layout
 - 🔄 Asynchronous backend processing
 
+
 ## 🛠️ Tech Stack
 
 ### Frontend:
