@@ -1,9 +1,3 @@
-node_modules
-inputs
-outputs
-codes
-.env
-
 # Logs
 logs
 *.log

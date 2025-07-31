@@ -1,58 +1,53 @@
 const express = require('express');
-const bodyParser = require('body-parser');
 const cors = require('cors');
-const { exec } = require('child_process');
-const fs = require('fs');
-const path = require('path');
+const dotenv = require('dotenv');
+const { generateFile } = require('./generateFile');
+const { generateInputFile } = require('./generateInputFile');
+const { executeCpp } = require('./executeCpp');
+const { aiCodeReview } = require('./aiCodeReview');
+
 
 const app = express();
-app.use(bodyParser.json());
+dotenv.config();
+
+//middlewares
 app.use(cors());
+app.use(express.urlencoded({ extended: true }));
+app.use(express.json());
 
-app.post('/execute', (req, res) => {
-  const { code, language } = req.body;
-  const tempFilePath = path.join(__dirname, 'tempCode');
 
-  let command;
-  switch (language) {
-    case 'python':
-      command = `python -c "${code.replace(/"/g, '\\"').replace(/\n/g, ';')}"`;
-      break;
-    case 'javascript':
-      command = `node -e "${code.replace(/"/g, '\\"').replace(/\n/g, ';')}"`;
-      break;
-    case 'java':
-      fs.writeFileSync(`${tempFilePath}.java`, code);
-      command = `javac ${tempFilePath}.java && java -cp ${__dirname} tempCode`;
-      break;
-    case 'cpp':
-      fs.writeFileSync(`${tempFilePath}.cpp`, code);
-      command = `g++ ${tempFilePath}.cpp -o ${tempFilePath} && ${tempFilePath}`;
-      break;
-    default:
-      return res.status(400).send('Language not supported');
-  }
-
-  exec(command, (error, stdout, stderr) => {
-    // Clean up temporary files
-    if (language === 'java') {
-      fs.unlinkSync(`${tempFilePath}.java`);
-      if (fs.existsSync(`${tempFilePath}.class`)) {
-        fs.unlinkSync(`${tempFilePath}.class`);
-      }
-    } else if (language === 'cpp') {
-      fs.unlinkSync(`${tempFilePath}.cpp`);
-      if (fs.existsSync(tempFilePath)) {
-        fs.unlinkSync(tempFilePath);
-      }
-    }
-  
-    if (error) {
-      return res.status(400).send(stderr || 'Execution error');
-    }
-    res.send(stdout || stderr);
-  });
+app.get("/", (req, res) => {
+    res.json({ online: 'compiler' });
 });
 
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+app.post("/run", async (req, res) => {
+    const { language = 'cpp', code, input } = req.body;
+    if (code === undefined) {
+        return res.status(404).json({ success: false, error: "Empty code!" });
+    }
+    try {
+        const filePath = await generateFile(language, code);
+        const inputPath = await generateInputFile(input);
+        const output = await executeCpp(filePath, inputPath);
+        res.json({ filePath, inputPath, output });
+    } catch (error) {
+        res.status(500).json({ error: "Error in execution, error: " + error.message });
+    }
+});
+
+app.post("/ai-review", async (req, res) => {
+    const { code } = req.body;
+    if (code === undefined) {
+        return res.status(404).json({ success: false, error: "Empty code!" });
+    }
+    try {
+        const review = await aiCodeReview(code);
+        res.json({ "review": review });
+    } catch (error) {
+        res.status(500).json({ error: "Error in AI review, error: " + error.message });
+    }
+});
+
+app.listen(process.env.PORT || 8000, () => {
+    console.log(`Server is listening on port ${process.env.PORT || 8000}!`);
+});
