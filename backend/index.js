@@ -1,54 +1,77 @@
-const express = require("express");
-const cors = require("cors");
 const dotenv = require("dotenv");
-const { generateFile } = require("./generateFile");
-const { generateInputFile } = require("./generateInputFile");
-const { executeCpp } = require("./executeCpp");
-const { aiCodeReview } = require("./aiCodeReview");
-
-const app = express();
 dotenv.config();
 
-//middlewares
-app.use(cors());
+const express = require("express");
+const cors = require("cors");
+const passport = require("./config/passport");
+
+const connectDB = require("./config/db");
+const authRoutes = require("./routes/authRoutes");
+const userRoutes = require("./routes/userRoutes");
+const problemRoutes = require("./routes/problemRoutes");
+const { protect } = require("./middleware/authMiddleware");
+
+const { generateFile } = require("./generateFile");
+const { generateInputFile } = require("./generateInputFile");
+const { executeCode } = require("./executeCode");
+const { aiCodeReview } = require("./aiCodeReview");
+
+connectDB();
+
+const app = express();
+
+app.use(
+  cors({
+    origin: process.env.CLIENT_URL || "http://localhost:5173",
+    credentials: true,
+  }),
+);
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
+app.use(passport.initialize());
 
+// ── Routes ────────────────────────────────────────────────────────────────────
+app.use("/api/auth", authRoutes);
+app.use("/api/user", userRoutes);
+app.use("/api/problems", problemRoutes);
+
+// ── Health check ──────────────────────────────────────────────────────────────
 app.get("/", (req, res) => {
-  res.json({ online: "compiler" });
+  res.json({ online: "AlgoU API v2" });
 });
 
-app.post("/run", async (req, res) => {
+// ── Compiler ──────────────────────────────────────────────────────────────────
+app.post("/run", protect, async (req, res) => {
   const { language = "cpp", code, input } = req.body;
-  if (code === undefined) {
+  if (!code) {
     return res.status(404).json({ success: false, error: "Empty code!" });
   }
   try {
     const filePath = await generateFile(language, code);
     const inputPath = await generateInputFile(input);
-    const output = await executeCpp(filePath, inputPath);
-
-    res.json({ filePath, inputPath, output });
+    const output = await executeCode(filePath, inputPath, language);
+    res.json({ output });
   } catch (error) {
-    res.status(500).json({ error: "Error in execution, error: " + error });
+    res.status(500).json({ error: error.message });
   }
 });
 
-app.post("/ai-review", async (req, res) => {
+// ── AI Review ─────────────────────────────────────────────────────────────────
+app.post("/ai-review", protect, async (req, res) => {
   const { code } = req.body;
-  if (code === undefined) {
+  if (!code) {
     return res.status(404).json({ success: false, error: "Empty code!" });
   }
   try {
     const review = await aiCodeReview(code);
-    res.json({ review: review });
+    res.json({ review });
   } catch (error) {
-    res
-      .status(500)
-      .json({ error: "Error in AI review, error: " + error.message });
+    res.status(500).json({ error: "Error in AI review: " + error.message });
   }
 });
 
-app.listen(process.env.PORT || 8000, () => {
-  console.log(`Server is listening on port ${process.env.PORT || 8000}!`);
+// ─────────────────────────────────────────────────────────────────────────────
+const PORT = process.env.PORT || 8000;
+app.listen(PORT, () => {
+  console.log(`Server is listening on port ${PORT}!`);
 });
