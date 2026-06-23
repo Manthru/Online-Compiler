@@ -217,18 +217,6 @@ Open `http://localhost:5173` 🎉
 
 Pull requests are welcome! For major changes, please open an issue first to discuss what you would like to change.
 
----
-
-## 👨‍💻 Author
-
-**V. Surya Teja (Manthru)**  
-BTech Student — Indian Institute of Technology Indore  
-Passionate about Cricket Analytics & Full Stack Development
-
-[![GitHub](https://img.shields.io/badge/GitHub-Manthru-181717?style=flat-square&logo=github)](https://github.com/Manthru)
-
----
-
 ## 📄 License
 
 This project is open source and available under the [MIT License](LICENSE).
