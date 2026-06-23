@@ -58,7 +58,7 @@ const Signup = () => {
   };
 
   const handleGoogle = () => {
-    window.location.href = "http://localhost:5000/api/auth/google";
+    window.location.href = "https://algou-backend.onrender.com/api/auth/google";
   };
 
   return (
