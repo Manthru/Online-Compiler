@@ -12,7 +12,7 @@
 
 ---
 
-![AlgoU Banner](Snapshot.png)
+![AlgoU Banner](download.png)
 
 ---
 
