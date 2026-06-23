@@ -3,7 +3,7 @@ const GoogleAuthButton = ({
   disabled = false,
 }) => {
   const handleClick = () => {
-    // Show alert if Google not configured
+    // Use production URL not localhost
     const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:5000";
     window.location.href = `${apiUrl}/api/auth/google`;
   };
