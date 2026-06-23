@@ -5,7 +5,6 @@ const User = require("../models/User");
 const clientID = process.env.GOOGLE_CLIENT_ID;
 const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
 
-// Skip if credentials are missing or placeholder
 if (
   !clientID ||
   !clientSecret ||
@@ -20,12 +19,13 @@ if (
       {
         clientID,
         clientSecret,
-        callbackURL: "/api/auth/google/callback",
+        // ← Use full URL not relative path
+        callbackURL:
+          "https://algou-backend.onrender.com/api/auth/google/callback",
       },
       async (accessToken, refreshToken, profile, done) => {
         try {
           let user = await User.findOne({ googleId: profile.id });
-
           if (!user) {
             user = await User.findOne({ email: profile.emails[0].value });
             if (user) {
@@ -41,7 +41,6 @@ if (
               });
             }
           }
-
           return done(null, user);
         } catch (error) {
           return done(error, null);
@@ -49,6 +48,5 @@ if (
       },
     ),
   );
-
   module.exports = passport;
 }
